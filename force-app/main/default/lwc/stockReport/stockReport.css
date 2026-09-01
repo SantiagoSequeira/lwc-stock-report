@@ -1,0 +1,35 @@
+.stock-report {
+    padding: var(--lwc-spacingMedium, 1rem);
+}
+
+.product-list-item {
+    cursor: pointer;
+    padding: var(--lwc-spacingSmall, 0.5rem) var(--lwc-spacingSmall, 0.5rem);
+    border-radius: 0.25rem;
+}
+
+.product-list-item:hover,
+.product-list-item:focus {
+    background-color: var(--lwc-colorBackgroundRowHover, rgb(243, 243, 243));
+}
+
+.trend-chart {
+    align-items: flex-end;
+    height: 8rem;
+}
+
+.trend-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    height: 100%;
+    margin: 0 0.25rem;
+}
+
+.trend-bar {
+    width: 1.5rem;
+    min-height: 2px;
+    background-color: var(--lwc-colorTextIconError, #ea001e);
+    border-radius: 0.125rem 0.125rem 0 0;
+}
