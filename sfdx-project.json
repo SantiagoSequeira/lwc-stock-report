@@ -1,0 +1,11 @@
+{
+  "packageDirectories": [
+    {
+      "path": "force-app",
+      "default": true
+    }
+  ],
+  "name": "lwc-stock-report",
+  "namespace": "",
+  "sourceApiVersion": "60.0"
+}

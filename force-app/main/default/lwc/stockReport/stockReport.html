@@ -1,0 +1,174 @@
+<template>
+    <div class="slds-grid slds-wrap slds-gutters stock-report">
+        <!-- Left side: product search / list -->
+        <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12">
+            <div class="slds-box slds-theme_default">
+                <h2 class="slds-text-heading_small slds-m-bottom_small">Productos</h2>
+
+                <lightning-input
+                    type="search"
+                    label="Buscar producto"
+                    placeholder="Nombre o código..."
+                    value={searchTerm}
+                    onchange={handleSearchChange}
+                    class="slds-m-bottom_small"
+                ></lightning-input>
+
+                <lightning-combobox
+                    name="statusFilter"
+                    label="Filtrar por estado"
+                    value={statusFilter}
+                    options={statusOptions}
+                    onchange={handleStatusFilterChange}
+                    class="slds-m-bottom_small"
+                ></lightning-combobox>
+
+                <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+                    {resultsCountLabel}
+                </p>
+
+                <template if:true={error}>
+                    <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                        <span>{error}</span>
+                    </div>
+                </template>
+
+                <ul class="slds-has-dividers_around-space product-list" role="listbox">
+                    <template for:each={filteredProducts} for:item="product">
+                        <li
+                            key={product.productId}
+                            class="slds-item product-list-item"
+                            data-id={product.productId}
+                            onclick={handleSelectProduct}
+                        >
+                            <div class="slds-grid slds-grid_vertical-align-center">
+                                <div class="slds-col slds-grow">
+                                    <p class="slds-text-heading_small">{product.name}</p>
+                                    <p class="slds-text-body_small slds-text-color_weak">
+                                        {product.productCode}
+                                    </p>
+                                </div>
+                                <div class="slds-col slds-no-flex">
+                                    <span class={product.badgeClass}>{product.badgeLabel}</span>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+
+                <template if:true={hasNoProducts}>
+                    <div class="slds-align_absolute-center slds-p-around_medium slds-text-color_weak">
+                        No se encontraron productos.
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Right side: product detail card + stock table + trend -->
+        <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">
+            <template if:true={hasSelectedProduct}>
+                <div class="slds-card slds-m-bottom_medium">
+                    <div class="slds-card__header slds-grid">
+                        <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                            <div class="slds-media__body">
+                                <h2 class="slds-card__header-title">
+                                    <span>{selectedProduct.name}</span>
+                                </h2>
+                            </div>
+                        </header>
+                    </div>
+                    <div class="slds-card__body slds-card__body_inner">
+                        <div class="slds-grid slds-wrap slds-gutters">
+                            <div class="slds-col slds-size_1-of-3">
+                                <p class="slds-text-title slds-text-color_weak">Cantidad total</p>
+                                <p class="slds-text-heading_medium">{selectedProduct.totalQuantity}</p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <p class="slds-text-title slds-text-color_weak">Próximo vencimiento</p>
+                                <p class="slds-text-heading_medium">
+                                    <lightning-formatted-date-time
+                                        value={selectedProduct.formattedNextExpirationDate}
+                                    ></lightning-formatted-date-time>
+                                </p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <p class="slds-text-title slds-text-color_weak">Estado</p>
+                                <span class={selectedProduct.badgeClass}>{selectedProduct.badgeLabel}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock data table -->
+                <div class="slds-card slds-m-bottom_medium">
+                    <div class="slds-card__header">
+                        <h3 class="slds-card__header-title">Lotes en stock</h3>
+                    </div>
+                    <div class="slds-card__body slds-card__body_inner">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col">Vto</th>
+                                    <th scope="col">Lote</th>
+                                    <th scope="col">Unidades</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={stockRows} for:item="batch">
+                                    <tr key={batch.batchId} class={batch.rowClass}>
+                                        <td>
+                                            <lightning-formatted-date-time
+                                                value={batch.expirationDate}
+                                            ></lightning-formatted-date-time>
+                                        </td>
+                                        <td>{batch.lotNumber}</td>
+                                        <td>{batch.quantity}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                        <template if:false={stockRows.length}>
+                            <p class="slds-p-around_medium slds-text-color_weak">
+                                Este producto no tiene lotes de stock cargados.
+                            </p>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Trend visualization -->
+                <div class="slds-card">
+                    <div class="slds-card__header">
+                        <h3 class="slds-card__header-title">Tendencia de stock</h3>
+                    </div>
+                    <div class="slds-card__body slds-card__body_inner">
+                        <template if:true={hasTrendData}>
+                            <div class="slds-grid slds-grid_align-spread trend-chart">
+                                <template for:each={trendBars} for:item="point">
+                                    <div key={point.label} class="trend-bar-wrapper slds-col">
+                                        <div class="trend-bar" style={point.barStyle} title={point.quantity}></div>
+                                        <p class="slds-text-body_small slds-text-align_center">
+                                            {point.label}
+                                        </p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:false={hasTrendData}>
+                            <p class="slds-p-around_medium slds-text-color_weak">
+                                Sin datos de tendencia disponibles.
+                            </p>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <template if:false={hasSelectedProduct}>
+                <div class="slds-illustration slds-illustration_small slds-p-around_large slds-text-align_center">
+                    <p class="slds-text-heading_medium slds-text-color_weak">
+                        Seleccioná un producto de la lista para ver su detalle.
+                    </p>
+                </div>
+            </template>
+        </div>
+    </div>
+</template>
